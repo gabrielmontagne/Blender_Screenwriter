@@ -47,6 +47,7 @@ class TEXT_OT_scenes_to_strips(bpy.types.Operator):
         first_duration = 0
         render = bpy.context.scene.render
         fps = round((render.fps / render.fps_base), 3)
+
         count = 0
         f_collected = []
         duration = 0
@@ -58,13 +59,20 @@ class TEXT_OT_scenes_to_strips(bpy.types.Operator):
         for fc, f in enumerate(f_collected):
             if str(f.scene_number) != "": f.scene_number = f.scene_number+ " "
             name = str(f.scene_number + f.element_text.title())
+
             new_scene = bpy.data.scenes.new(name=name)
 
+            new_scene.render.fps_base = render.fps_base
+            new_scene.render.fps = render.fps
+            new_scene.render.resolution_x = render.resolution_x
+            new_scene.render.resolution_y = render.resolution_y
+
             cam = bpy.data.cameras.new("Camera")
-            cam.lens = 35
+            cam.lens = 50
             cam_obj1 = bpy.data.objects.new("Camera", cam)
-            cam_obj1.location = (9.69, -10.85, 12.388)
-            cam_obj1.rotation_euler = (0.6799, 0, 0.8254)
+            cam_obj1.location = (0.0, -5, 0.5)
+            cam_obj1.rotation_euler = (1.5707963705062866, 0.0, 0.0)
+
             new_scene.collection.objects.link(cam_obj1)
 
             if fc == 0:
