@@ -40,6 +40,9 @@ class TEXT_OT_scenes_to_strips(bpy.types.Operator):
             empty_channel = channels[-1] + 1
             addSceneChannel = empty_channel
 
+        # TODO
+        add_title_channel = addSceneChannel + 1
+
         # add scene strips
         previous_time = 0
         previous_line = 0
@@ -53,6 +56,7 @@ class TEXT_OT_scenes_to_strips(bpy.types.Operator):
         
         for fc, f in enumerate(F.elements):
             if f.element_type == 'Scene Heading':
+                print(f.original_content)
                 f_collected.append(f)
 
         for fc, f in enumerate(f_collected):
@@ -78,16 +82,46 @@ class TEXT_OT_scenes_to_strips(bpy.types.Operator):
                     if ec == fc+1:            
                         duration = int((((e.original_line - f.original_line)/lines_pr_minute)*60)*fps)
                         
+
+
             in_time =  duration + previous_time
+
+
             bpy.data.scenes[name].frame_start = 0
             bpy.data.scenes[name].frame_end = duration
+
+
             newScene=bpy.context.scene.sequence_editor.sequences.new_scene(f.element_text.title(), new_scene, addSceneChannel, previous_time)
+
             bpy.context.scene.sequence_editor.sequences_all[newScene.name].scene_camera = bpy.data.objects[cam.name]
+
             #bpy.context.scene.sequence_editor.sequences_all[newScene.name].animation_offset_start = 0
+
             bpy.context.scene.sequence_editor.sequences_all[newScene.name].frame_final_end = in_time
             bpy.context.scene.sequence_editor.sequences_all[newScene.name].frame_start = previous_time
+
+            print('create desc', previous_time, in_time, f.original_content)
+
+            text_strip = bpy.context.scene.sequence_editor.sequences.new_effect(
+                name=f.original_content,
+                type='TEXT',
+                channel=addSceneChannel+2,
+                frame_start=previous_time,
+                frame_end=in_time
+                )
+
+            text_strip.font_size = int(bpy.context.scene.render.resolution_y/18)
+            text_strip.text = f.original_content
+            text_strip.use_shadow = True
+            text_strip.select = True
+            text_strip.wrap_width = 0.85
+            text_strip.location[1] = 0.50
+            text_strip.blend_type = 'ALPHA_OVER'
+
             previous_time = in_time
             previous_line = f.original_line
+
+
             
         bpy.ops.sequencer.set_range_to_strips()
 

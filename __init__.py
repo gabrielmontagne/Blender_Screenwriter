@@ -14,6 +14,8 @@ import bpy
 from bpy.props import IntProperty, BoolProperty, PointerProperty, StringProperty, EnumProperty
 
 
+print('slillas')
+
 # load and reload submodules
 ##################################
 
@@ -67,6 +69,8 @@ def register():
     bpy.types.Scene.last_line_index = IntProperty(default=0)
     bpy.types.Scene.text_replace = PointerProperty(type=TextReplaceProperties)
     bpy.types.Scene.title_page_index = IntProperty(default=0)
+    
+    print('narias')
 
 def unregister():
     ### OPERATORS ###
@@ -83,3 +87,4 @@ def unregister():
     del bpy.types.Scene.last_line_index
     del bpy.types.Scene.text_replace
     del bpy.types.Scene.title_page_index
+
