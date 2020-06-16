@@ -3,7 +3,6 @@ import bpy
 from .. import fountain
 from pathlib import Path
 
-
 class TEXT_OT_scenes_to_strips(bpy.types.Operator):
     """Convert screenplay data to scene and text strips"""
     bl_idname = "text.scenes_to_strips"
@@ -13,9 +12,8 @@ class TEXT_OT_scenes_to_strips(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         space = bpy.context.space_data
-        try: 
+        try:
             filepath = space.text.name
-            #filepath = bpy.context.area.spaces.active.text.filepath
             if filepath.strip() == "": return False
             return ((space.type == 'TEXT_EDITOR')
                     and Path(filepath).suffix == ".fountain")
@@ -28,9 +26,8 @@ class TEXT_OT_scenes_to_strips(bpy.types.Operator):
 
         F = fountain.Fountain(fountain_script)
 
-        # Find empty channel
         if not bpy.context.scene.sequence_editor:
-            bpy.context.scene.sequence_editor_create()   
+            bpy.context.scene.sequence_editor_create()
         sequences = bpy.context.sequences
         if not sequences:
             addSceneChannel = 1
@@ -50,7 +47,7 @@ class TEXT_OT_scenes_to_strips(bpy.types.Operator):
         count = 0
         f_collected = []
         duration = 0
-        
+
         for fc, f in enumerate(F.elements):
             if f.element_type == 'Scene Heading':
                 f_collected.append(f)
@@ -65,18 +62,17 @@ class TEXT_OT_scenes_to_strips(bpy.types.Operator):
                     if ec == fc + 1:
                         first_duration = int((((e.original_line)/lines_pr_minute)*60)*fps)
                         duration = first_duration
-                print("Fc "+str(e.original_line)+" ec "+str(f.original_line))
             else:
                 for ec, e in enumerate(f_collected):
-                    if ec == fc+1:            
+                    if ec == fc+1:
                         duration = int((((e.original_line - f.original_line)/lines_pr_minute)*60)*fps)
-                        
+
             in_time =  duration + previous_time
 
             text_strip = bpy.context.scene.sequence_editor.sequences.new_effect(
                 name=f.original_content,
                 type='TEXT',
-                channel=addSceneChannel+2,
+                channel=addSceneChannel,
                 frame_start=previous_time,
                 frame_end=in_time
                 )
@@ -92,36 +88,29 @@ class TEXT_OT_scenes_to_strips(bpy.types.Operator):
             previous_time = in_time
             previous_line = f.original_line
 
-        bpy.ops.sequencer.set_range_to_strips()
 
-        # add dialogue/text strips
         characters_pr_minute = 950
 
         f_collected = []
 
         for fc, f in enumerate(F.elements):
-            # if f.element_type == 'Dialogue':
             if f.element_type == 'Action':
                 f_collected.append(f)
 
         for fc, f in enumerate(f_collected):
             name = str(f.element_text)
-
             out_time = int(((f.original_line/lines_pr_minute)*60)*fps) + int(((len(f.original_content)/characters_pr_minute)*60)*fps)
 
-            # Is out_time of the current dialogue strip later than in_time of the next strip?
             for ec, e in enumerate(f_collected):
-
-                if ec == fc+1 and e.original_line != 0:            
+                if ec == fc+1 and e.original_line != 0:
                     alt_out_time = int(((e.original_line/lines_pr_minute)*60)*fps)
-
                     if alt_out_time - out_time < 0:
                         out_time = int((((e.original_line)/lines_pr_minute)*60)*fps)-5
 
             in_time = int(((f.original_line/lines_pr_minute)*60)*fps)
 
-            if out_time < in_time: out_time = in_time + 60 #protect against odd values  
-                   
+            if out_time < in_time: out_time = in_time + 60 #protect against odd values
+
             text_strip = bpy.context.scene.sequence_editor.sequences.new_effect(
                 name=name,
                 type='TEXT',
@@ -141,31 +130,25 @@ class TEXT_OT_scenes_to_strips(bpy.types.Operator):
 
         for fc, f in enumerate(F.elements):
             if f.element_type == 'Dialogue':
-            # if f.element_type == 'Action':
                 f_collected.append(f)
 
         for fc, f in enumerate(f_collected):
             name = str(f.element_text)
-
             out_time = int(((f.original_line/lines_pr_minute)*60)*fps) + int(((len(f.original_content)/characters_pr_minute)*60)*fps)
 
-            # Is out_time of the current dialogue strip later than in_time of the next strip?
             for ec, e in enumerate(f_collected):
-
-                if ec == fc+1 and e.original_line != 0:            
+                if ec == fc+1 and e.original_line != 0:
                     alt_out_time = int(((e.original_line/lines_pr_minute)*60)*fps)
-
                     if alt_out_time - out_time < 0:
                         out_time = int((((e.original_line)/lines_pr_minute)*60)*fps)-5
 
             in_time = int(((f.original_line/lines_pr_minute)*60)*fps)
+            if out_time < in_time: out_time = in_time + 60 #protect against odd values
 
-            if out_time < in_time: out_time = in_time + 60 #protect against odd values  
-                   
             text_strip = bpy.context.scene.sequence_editor.sequences.new_effect(
                 name=name,
                 type='TEXT',
-                channel=addSceneChannel+3,
+                channel=addSceneChannel+2,
                 frame_start=in_time,
                 frame_end=out_time
                 )
@@ -176,5 +159,7 @@ class TEXT_OT_scenes_to_strips(bpy.types.Operator):
             text_strip.wrap_width = 0.85
             text_strip.location[1] = 0.10
             text_strip.blend_type = 'ALPHA_OVER'
+
+        bpy.ops.sequencer.set_range_to_strips()
 
         return {'FINISHED'}
